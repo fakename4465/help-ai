@@ -1,0 +1,138 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - schedule_meeting
+  - reset_password
+  - inform
+  - out_of_scope
+  - bot_challenge
+
+entities:
+  - date
+  - time
+  - location
+  - attendees
+  - employee_id
+
+slots:
+  date:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: date
+  time:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: time
+  location: # Making location optional for now, so not in required_slots of form
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: location
+  attendees:
+    type: list # Important for multiple attendees
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: attendees
+  employee_id:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: employee_id
+  requested_slot: # Special slot used by Rasa to manage forms
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: custom
+
+forms:
+  schedule_meeting_form:
+    required_slots:
+      - date
+      - time
+      - attendees
+    # No need to list individual slot mappings here if they are standard entity mappings defined in the slots section
+
+actions:
+  # Custom actions
+  - action_schedule_meeting
+  - action_reset_password
+  - validate_schedule_meeting_form # Form validation action
+
+  # Utterances (bot responses)
+  - utter_greet
+  - utter_goodbye
+  - utter_happy
+  - utter_iamabot
+  - utter_ask_date # Response used by the form
+  - utter_ask_time # Response used by the form
+  - utter_ask_location # Response used by the form (if location becomes required or asked explicitly)
+  - utter_ask_attendees # Response used by the form
+  - utter_confirm_meeting_slots
+  - utter_password_reset_success # This was in your original list, now handled by action_reset_password
+  - utter_ask_employee_id
+  - utter_out_of_scope
+  - utter_ask_what_to_change # For story where user wants to modify form data
+  - utter_submit_form_schedule_meeting # A generic "Okay, working on that" before custom action
+
+responses:
+  utter_greet:
+  - text: "Hello! How can I assist you today? I can help schedule meetings or reset passwords."
+
+  utter_goodbye:
+  - text: "Goodbye! Have a great day."
+  - text: "Talk to you later!"
+
+  utter_happy:
+  - text: "Great!"
+  - text: "Awesome, glad I could help!"
+
+  utter_iamabot:
+  - text: "I am a chatbot, powered by Rasa."
+
+  utter_ask_date:
+  - text: "Sure, for what date would you like to schedule the meeting?"
+
+  utter_ask_time:
+  - text: "And at what time?"
+
+  utter_ask_location: # Even if optional, the bot might need to ask if it's not provided and relevant
+  - text: "Where will the meeting take place? (e.g., Conference Room A, Online). You can skip this if not needed."
+
+  utter_ask_attendees:
+  - text: "Who should I invite to the meeting? Please list their names."
+
+  utter_confirm_meeting_slots: # Used after form is filled, before calling action_schedule_meeting
+  - text: "Okay, I have the following details for the meeting:
+    Date: {date}
+    Time: {time}
+    Attendees: {attendees}
+    Location: {location if location else 'Not specified'}
+    Shall I proceed with scheduling?"
+
+  utter_ask_employee_id:
+  - text: "I can help with that. What is your employee ID, please?"
+
+  utter_out_of_scope:
+  - text: "I'm sorry, I can't help with that. I'm currently trained to schedule meetings and assist with password resets."
+  - text: "My apologies, that's beyond my current capabilities. Try asking about meetings or password help."
+
+  utter_ask_what_to_change:
+  - text: "Okay, what information would you like to change for the meeting?"
+
+  utter_submit_form_schedule_meeting: # Generic response when form is submitted
+  - text: "Thanks! Let me finalize those meeting details for you."
+
+session_config:
+  session_expiration_time: 60 # In minutes
+  carry_over_slots_to_new_session: true
